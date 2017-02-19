@@ -1,0 +1,8 @@
+description = "Map à la Binary Radix Tree"
+version = "%%VERSION_NUM%%"
+requires = ""
+archive(byte) = "radixmap.cma"
+archive(native) = "radixmap.cmxa"
+plugin(byte) = "radixmap.cma"
+plugin(native) = "radixmap.cmxs"
+exists_if = "radixmap.cma"

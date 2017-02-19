@@ -1,0 +1,4 @@
+true: bin_annot
+"lib": include
+
+<lib/bitword.*>: inline(4)
