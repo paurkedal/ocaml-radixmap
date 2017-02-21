@@ -6,3 +6,13 @@ archive(native) = "radixmap.cmxa"
 plugin(byte) = "radixmap.cma"
 plugin(native) = "radixmap.cmxs"
 exists_if = "radixmap.cma"
+
+package "ipaddr" (
+  version = "%%VERSION_NUM%%"
+  requires = "ipaddr"
+  archive(byte) = "radixmap-ipaddr.cma"
+  archive(native) = "radixmap-ipaddr.cmxa"
+  plugin(byte) = "radixmap-ipaddr.cma"
+  plugin(native) = "radixmap-ipaddr.cmxs"
+  exists_if = "radixmap-ipaddr.cma"
+)

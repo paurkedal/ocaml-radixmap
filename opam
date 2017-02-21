@@ -12,3 +12,6 @@ depends: [
   "ocamlbuild" {build}
   "topkg" {build}
 ]
+depopts: [
+  "ipaddr"
+]
