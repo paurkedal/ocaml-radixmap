@@ -19,12 +19,21 @@ module type EQUAL = sig
   val equal : t -> t -> bool
 end
 
+let cat_bitword p pN ps =
+  let p', pN' = Bitword.cat_rem p pN in
+  if Bitword.is_empty p' then (pN', ps) else (pN', (p' :: ps))
+
 module Poly = struct
   type path = Bitword.t
   type 'a t =
     | Const of 'a
     | Appose of 'a t * 'a t
     | Unzoom of 'a * Bitword.t * 'a t
+
+  let rec max_depth = function
+   | Const x -> 0
+   | Appose (h0, h1) -> 1 + max (max_depth h0) (max_depth h1)
+   | Unzoom (x, p, h) -> Bitword.length p + max_depth h
 
   let head ~const ~appose ~unzoom = function
    | Const x -> const x
@@ -38,6 +47,55 @@ module Poly = struct
       appose (cata ~const ~appose ~unzoom h0) (cata ~const ~appose ~unzoom h1)
    | Unzoom (x, p, h) ->
       unzoom x p (cata ~const ~appose ~unzoom h)
+
+  let catai_bytes ?index_buffer_size ~make_index
+                  ~const ~appose ~unzoom h =
+    let pbuf =
+      Bytes.make
+        (match index_buffer_size with
+         | None -> ((max_depth h + 7) / 8)
+         | Some n -> n) '\x00' in
+    let rec loop plen = function
+     | Const x ->
+        const (make_index plen pbuf) x
+     | Appose (h0, h1) ->
+        let byte = Char.code (Bytes.get pbuf (plen / 8)) in
+        let bit = 0x80 lsr (plen mod 8) in
+        let acc0 = loop (plen + 1) h0 in
+        Bytes.set pbuf (plen / 8) (Char.chr (byte lor bit));
+        let acc1 = loop (plen + 1) h1 in
+        Bytes.set pbuf (plen / 8) (Char.chr byte);
+        appose (make_index plen pbuf) acc0 acc1
+     | Unzoom (x, p, h) ->
+        let bp = Bitword.bits p in
+        let lp = Bitword.length p in
+        let first_byte = Char.code (Bytes.get pbuf (plen / 8)) in
+        let acc =
+          if lp <= 8 - plen mod 8 then begin
+            let first_bits = bp lsl (8 - plen mod 8 - lp) in
+            Bytes.set pbuf (plen / 8) (Char.chr (first_byte lor first_bits));
+            let acc = loop (plen + lp) h in
+            Bytes.set pbuf (plen / 8) (Char.chr first_byte);
+            acc
+          end else begin
+            let first_bits = bp lsr (lp - 8 + plen mod 8) in
+            Bytes.set pbuf (plen / 8) (Char.chr (first_byte lor first_bits));
+            let rec ext_pbuf l j =
+              if l >= 8 then begin
+                Bytes.set pbuf j (Char.chr (bp lsr (l - 8) land 0xff));
+                ext_pbuf (l - 8) (j + 1)
+              end else if l > 0 then begin
+                Bytes.set pbuf j (Char.chr (bp lsl (8 - l) land 0xff))
+              end in
+            let lp' = lp - 8 + plen mod 8 in
+            ext_pbuf lp' (plen / 8 + 1);
+            let acc = loop (plen + lp) h in
+            Bytes.fill pbuf (plen / 8 + 1) ((lp' + 7) / 8) '\x00';
+            Bytes.set pbuf (plen / 8) (Char.chr first_byte);
+            acc
+          end in
+        unzoom (make_index plen pbuf) x p acc in
+    loop 0 h
 
   let const x = Const x
   let is_const = function Const _ -> true | _ -> false
@@ -95,6 +153,7 @@ module Make (Cod : EQUAL) = struct
   let zoom = Poly.zoom
   let head = Poly.head
   let cata = Poly.cata
+  let catai_bytes = Poly.catai_bytes
 
   let rec valid = function
    | Const _ -> true
@@ -189,9 +248,7 @@ module Make (Cod : EQUAL) = struct
           appose (loop (Bitword.Be.push_c0_exn p) ps h0)
                  (loop (Bitword.Be.push_c1_exn p) ps h1)
      | Unzoom (x, pN, hN) ->
-        let p', ps' =
-          let p', pN' = Bitword.cat_rem p pN in
-          if Bitword.is_empty p' then (pN', ps) else (pN', (p' :: ps)) in
+        let p', ps' = cat_bitword p pN ps in
         unzoom (f (p :: ps) x) p (loop p' ps' hN) in
     (match h with
      | Const x -> Const (f [] x)

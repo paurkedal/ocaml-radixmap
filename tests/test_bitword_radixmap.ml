@@ -38,6 +38,39 @@ let rec random_map () =
     loop (n - 1) (modify_random acc) in
   loop (Random.int size) (M.const (Random.int size))
 
+let check_path path ws =
+  let rec loop i = function
+   | [] -> ()
+   | w :: ws ->
+      let l = Bitword.length w in
+      for k = 0 to l - 1 do
+        let byte = Char.code path.[(i + k) / 8] in
+        assert (Bitword.Be.get w k = (byte lsr (7 - (i + k) mod 8) land 1 <> 0))
+      done;
+      loop (i + l) ws in
+  loop 0 (List.rev ws)
+
+let test_catai_bytes () =
+  let make_index plen pbuf = (plen, pbuf) in
+  let const (plen, pbuf) _ =
+    let path = Bytes.sub_string pbuf 0 ((plen + 7) / 8) in
+    fun ws ->
+      check_path path ws in
+  let appose (plen, pbuf) f0 f1 =
+    let path = Bytes.sub_string pbuf 0 ((plen + 7) / 8) in
+    fun ws ->
+      check_path path ws;
+      f0 (Bitword.c0 :: ws);
+      f1 (Bitword.c1 :: ws) in
+  let unzoom (plen, pbuf) x w f =
+    let path = Bytes.sub_string pbuf 0 ((plen + 7) / 8) in
+    fun ws ->
+      check_path path ws;
+      f (w :: ws) in
+  for _ = 1 to 10000 do
+    M.catai_bytes ~make_index ~const ~appose ~unzoom (random_map ()) []
+  done
+
 let () =
   let mC = M.const 211 in
   assert (M.equal mC mC);
@@ -69,4 +102,5 @@ let () =
                     (M.merge max mA (M.unzoom 0 p mB)));
     assert (M.equal (M.merge max mA mB)
                     (M.map (~-) (M.merge min (M.map (~-) mA) (M.map (~-) mB))))
-  done
+  done;
+  test_catai_bytes ()

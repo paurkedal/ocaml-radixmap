@@ -50,6 +50,13 @@ module Poly : sig
     unzoom: ('a -> path -> 'b -> 'b) ->
     'a t -> 'b
 
+  val catai_bytes :
+    ?index_buffer_size: int -> make_index: (int -> Bytes.t -> 'i) ->
+    const: ('i -> 'a -> 'b) ->
+    appose: ('i -> 'b -> 'b -> 'b) ->
+    unzoom: ('i -> 'a -> path -> 'b -> 'b) ->
+    'a t -> 'b
+
   val pp : (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a t -> unit
 end
 
@@ -83,4 +90,12 @@ module Make (Cod : EQUAL) : sig
     appose: ('b -> 'b -> 'b) ->
     unzoom: (cod -> path -> 'b -> 'b) ->
     t -> 'b
+
+  val catai_bytes :
+    ?index_buffer_size: int -> make_index: (int -> Bytes.t -> 'i) ->
+    const: ('i -> cod -> 'b) ->
+    appose: ('i -> 'b -> 'b -> 'b) ->
+    unzoom: ('i -> cod -> path -> 'b -> 'b) ->
+    t -> 'b
+
 end
