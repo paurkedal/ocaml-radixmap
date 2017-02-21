@@ -14,10 +14,7 @@
  * along with this library.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
-module type EQUAL = sig
-  type t
-  val equal : t -> t -> bool
-end
+open Bitword_radixmap_sig
 
 let cat_bitword p pN ps =
   let p', pN' = Bitword.cat_rem p pN in

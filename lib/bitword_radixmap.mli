@@ -24,10 +24,7 @@
     The map represent a complete function; to represent the more common kind of
     map, an option type may be used for the codomain. *)
 
-module type EQUAL = sig
-  type t
-  val equal : t -> t -> bool
-end
+open Bitword_radixmap_sig
 
 module Poly : sig
   type path = Bitword.t
@@ -60,42 +57,6 @@ module Poly : sig
   val pp : (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a t -> unit
 end
 
-module Make (Cod : EQUAL) : sig
-  type path = Bitword.t
-  type cod = Cod.t
-  type t = cod Poly.t
-
-  val equal : t -> t -> bool
-
-  val const : cod -> t
-  val is_const : t -> bool
-  val value : t -> cod option
-  val appose : t -> t -> t
-  val unzoom : cod -> path -> t -> t
-  val zoom : path -> t -> t
-
-  val modify : path -> (t -> t) -> t -> t
-  val map : ('a -> cod) -> 'a Poly.t -> t
-  val mapi : (path list -> 'a -> cod) -> 'a Poly.t -> t
-  val merge : ('a -> 'b -> cod) -> 'a Poly.t -> 'b Poly.t -> t
-
-  val head :
-    const: (cod -> 'b) ->
-    appose: (t -> t -> 'b) ->
-    unzoom: (cod -> path -> t -> 'b) ->
-    t -> 'b
-
-  val cata :
-    const: (cod -> 'b) ->
-    appose: ('b -> 'b -> 'b) ->
-    unzoom: (cod -> path -> 'b -> 'b) ->
-    t -> 'b
-
-  val catai_bytes :
-    ?index_buffer_size: int -> make_index: (int -> Bytes.t -> 'i) ->
-    const: ('i -> cod -> 'b) ->
-    appose: ('i -> 'b -> 'b -> 'b) ->
-    unzoom: ('i -> cod -> path -> 'b -> 'b) ->
-    t -> 'b
-
-end
+module Make (Cod : EQUAL) : S
+  with type cod = Cod.t
+   and type 'a poly := 'a Poly.t
