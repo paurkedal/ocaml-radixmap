@@ -35,7 +35,7 @@ module Poly : sig
   val value : 'a t -> 'a option
   val zoom : path -> 'a t -> 'a t
 
-  val head :
+  val recurse :
     const: ('a -> 'b) ->
     appose: ('a t -> 'a t -> 'b) ->
     unzoom: ('a -> path -> 'a t -> 'b) ->

@@ -32,7 +32,7 @@ module Poly = struct
    | Appose (h0, h1) -> 1 + max (max_depth h0) (max_depth h1)
    | Unzoom (x, p, h) -> Bitword.length p + max_depth h
 
-  let head ~const ~appose ~unzoom = function
+  let recurse ~const ~appose ~unzoom = function
    | Const x -> const x
    | Appose (h0, h1) -> appose h0 h1
    | Unzoom (x, p, h) -> unzoom x p h
@@ -148,7 +148,7 @@ module Make (Cod : EQUAL) = struct
   let is_const = Poly.is_const
   let value = Poly.value
   let zoom = Poly.zoom
-  let head = Poly.head
+  let recurse = Poly.recurse
   let cata = Poly.cata
   let catai_bytes = Poly.catai_bytes
 

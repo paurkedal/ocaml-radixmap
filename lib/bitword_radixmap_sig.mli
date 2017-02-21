@@ -41,7 +41,7 @@ module type S = sig
   val mapi : (path list -> 'a -> cod) -> 'a poly -> t
   val merge : ('a -> 'b -> cod) -> 'a poly -> 'b poly -> t
 
-  val head :
+  val recurse :
     const: (cod -> 'b) ->
     appose: (t -> t -> 'b) ->
     unzoom: (cod -> path -> t -> 'b) ->
