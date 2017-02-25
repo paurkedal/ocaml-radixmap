@@ -55,6 +55,8 @@ module Test_be = Test_endian (struct include Bitword.Be let is_be = true end)
 module Test_le = Test_endian (struct include Bitword.Le let is_be = false end)
 
 let () =
+  Testkit.init "test_bitword";
+
   assert (Bitword.max_length mod 8 = 0);
   assert (Bitword.max_length >= 24);
   assert (Bitword.length Bitword.c0 = 1);

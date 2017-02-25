@@ -175,5 +175,6 @@ module Test_V4 = Make (V4)
 module Test_V6 = Make (V6)
 
 let () =
+  Testkit.init "test_ip_radixset";
   Test_V4.test ();
   Test_V6.test ()

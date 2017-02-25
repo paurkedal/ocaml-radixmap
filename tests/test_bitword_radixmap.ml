@@ -79,6 +79,8 @@ let (=%) mA mB =
 let (<>%) mA mB = not (mA =% mB)
 
 let () =
+  Testkit.init "test_bitword_radixmap";
+
   let mC = M.const 211 in
   assert (M.equal mC mC);
   assert (M.is_const mC);
