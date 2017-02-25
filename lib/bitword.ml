@@ -70,6 +70,10 @@ let is_full p = length p = max_length
 let empty = 0
 let c0 = 1
 let c1 = 1 lor bit0
+let c00 = 2
+let c01 = 2 lor bit0
+let c10 = 2 lor 2 lsl length_width
+let c11 = 2 lor 3 lsl length_width
 
 let make_unsafe n x = x lsl length_width lor n
 let make n x =

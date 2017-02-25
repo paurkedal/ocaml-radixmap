@@ -105,6 +105,11 @@ module Poly = struct
      | Appose (h0, h1) ->
         let kZ, pZ' = Bitword.Be.pop_exn pZ in
         zoom pZ' (if kZ then h1 else h0)
+     | Unzoom (xH, pN, Const xN)
+          when Bitword.equal (Bitword.Le.drop_exn pN) pZ ->
+        if Bitword.Le.get pN 0
+        then Appose (Const xH, Const xN)
+        else Appose (Const xN, Const xH)
      | Unzoom (xH, pN, hN) ->
         let nZ = Bitword.length pZ in
         let nN = Bitword.length pN in
@@ -157,12 +162,14 @@ module Make (Cod : EQUAL) = struct
    | Appose (Const x0, Const x1) -> not (Cod.equal x0 x1)
    | Appose (Const _, _) | Appose (_, Const _) -> false
    | Appose (h0, h1) -> valid h0 && valid h1
-   | Unzoom (xH, p, Const xN) when Cod.equal xH xN -> false
-   | Unzoom (xH, p, h) -> not (Bitword.is_empty p) && valid_hcont xH h
-  and valid_hcont xHH = function
-   | Unzoom (xH, p, h) ->
-      (Bitword.is_full p || not (Cod.equal xHH xH)) && valid_hcont xH h
-   | h -> valid h
+   | Unzoom (xH, _, Appose (Const x0, Const x1)) ->
+      not (Cod.equal xH x0 || Cod.equal xH x1 || Cod.equal x0 x1)
+   | Unzoom (xH, p, Const xN) ->
+      not (Bitword.is_empty p) && not (Cod.equal xH xN)
+   | Unzoom (xH, p, (Unzoom (xH', p', hN') as hN)) when Cod.equal xH xH' ->
+      not (Bitword.is_empty p) && Bitword.is_full p' && valid hN
+   | Unzoom (xH, p, hN) ->
+      not (Bitword.is_empty p) && valid hN
 
   let rec equal hA hB =
     (match hA, hB with
@@ -173,10 +180,18 @@ module Make (Cod : EQUAL) = struct
      | Unzoom (xA, pA, hAN), Unzoom (xB, pB, hBN) ->
         Cod.equal xA xB && Bitword.equal pA pB && equal hAN hBN)
 
-  let unzoom xA pA h =
+  let rec unzoom xA pA h =
     if Bitword.is_empty pA then h else
     (match h with
      | Const x when Cod.equal x xA -> h
+     | Const x when Bitword.length pA = 1 ->
+        if Bitword.Be.get pA 0
+        then Appose (Const xA, h)
+        else Appose (h, Const xA)
+     | Appose (h0, Const x1) when Cod.equal x1 xA ->
+        unzoom xA pA (Unzoom (xA, Bitword.c0, h0))
+     | Appose (Const x0, h1) when Cod.equal x0 xA ->
+        unzoom xA pA (Unzoom (xA, Bitword.c1, h1))
      | Unzoom (xH, pN, hN) when Cod.equal xH xA ->
         let pA', pN' = Bitword.cat_rem pA pN in
         if Bitword.is_empty pA'
@@ -188,12 +203,22 @@ module Make (Cod : EQUAL) = struct
     (match h0, h1 with
      | Const x0, Const x1 ->
         if Cod.equal x0 x1 then Const x0 else Appose (h0, h1)
-     | Unzoom (xH, pN, hN), Const xC
-       when Cod.equal xC xH && not (Bitword.is_full pN) ->
-        Unzoom (xH, Bitword.Be.push_c0_exn pN, hN)
-     | Const xC, Unzoom (xH, pN, hN)
-       when Cod.equal xC xH && not (Bitword.is_full pN) ->
-        Unzoom (xH, Bitword.Be.push_c1_exn pN, hN)
+     | Unzoom (xH, pN, hN), Const xC when Cod.equal xC xH ->
+        if Bitword.is_full pN
+        then Unzoom (xH, Bitword.c0, h0)
+        else Unzoom (xH, Bitword.Be.push_c0_exn pN, hN)
+     | Const xC, Unzoom (xH, pN, hN) when Cod.equal xC xH ->
+        if Bitword.is_full pN
+        then Unzoom (xH, Bitword.c1, h1)
+        else Unzoom (xH, Bitword.Be.push_c1_exn pN, hN)
+     | Appose ((Const x00 as h00), (Const x01 as h01)), Const x1 ->
+        if Cod.equal x1 x01 then Unzoom (x1, Bitword.c00, h00) else
+        if Cod.equal x1 x00 then Unzoom (x1, Bitword.c01, h01) else
+        Unzoom (x1, Bitword.c0, h0)
+     | Const x0, Appose ((Const x10 as h10), (Const x11 as h11)) ->
+        if Cod.equal x0 x10 then Unzoom (x0, Bitword.c11, h11) else
+        if Cod.equal x0 x11 then Unzoom (x0, Bitword.c10, h10) else
+        Unzoom (x0, Bitword.c1, h1)
      | _, Const x1 -> Unzoom (x1, Bitword.c0, h0)
      | Const x0, _ -> Unzoom (x0, Bitword.c1, h1)
      | (Appose _ | Unzoom _), (Appose _ | Unzoom _) -> Appose (h0, h1))

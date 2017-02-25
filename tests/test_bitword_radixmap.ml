@@ -71,6 +71,13 @@ let test_catai_bytes () =
     M.catai_bytes ~make_index ~const ~appose ~unzoom (random_map ()) []
   done
 
+let (=%) mA mB =
+  assert (M.valid mA);
+  assert (M.valid mB);
+  M.equal mA mB
+
+let (<>%) mA mB = not (mA =% mB)
+
 let () =
   let mC = M.const 211 in
   assert (M.equal mC mC);
@@ -84,23 +91,22 @@ let () =
     let p = Bitword.random_uniform np in
     let p', p'' = Bitword.Le.cut (Random.int (np + 1)) p in
 
-    assert (M.equal mC (M.zoom p mC));
-    assert (M.equal mC (M.unzoom 211 p mC));
-    assert (M.equal mA (M.zoom Bitword.empty mA));
-    assert (M.equal mA (M.unzoom (Random.int 100) Bitword.empty mA));
-    assert (M.equal mA (M.zoom p (M.unzoom (Random.int 100) p mA)));
-    assert (not (M.equal mA (M.unzoom (-1) p mA)));
-    assert (M.equal mA (M.zoom Bitword.c0 (M.appose mA mB)));
-    assert (M.equal mB (M.zoom Bitword.c1 (M.appose mA mB)));
+    assert (mC =% M.zoom p mC);
+    assert (mC =% M.unzoom 211 p mC);
+    assert (mA =% M.zoom Bitword.empty mA);
+    assert (mA =% M.unzoom (Random.int 100) Bitword.empty mA);
+    assert (mA =% M.zoom p (M.unzoom (Random.int 100) p mA));
+    assert (mA <>% M.unzoom (-1) p mA);
+    assert (mA =% M.zoom Bitword.c0 (M.appose mA mB));
+    assert (mB =% M.zoom Bitword.c1 (M.appose mA mB));
 
-    assert (M.equal (M.zoom p mA) (mA |> M.zoom p' |> M.zoom p''));
-    assert (M.equal (M.unzoom 0 p mA) (M.unzoom 0 p' (M.unzoom 0 p'' mA)));
-    assert (M.equal (M.modify p (fun _ -> mB) mA)
-                    (M.modify p' (M.modify p'' (fun _ -> mB)) mA));
-    assert (M.equal mA (mA |> M.map lnot |> M.map lnot));
-    assert (M.equal (M.modify p (M.merge max mB) mA)
-                    (M.merge max mA (M.unzoom 0 p mB)));
-    assert (M.equal (M.merge max mA mB)
-                    (M.map (~-) (M.merge min (M.map (~-) mA) (M.map (~-) mB))))
+    assert (M.zoom p mA =% (mA |> M.zoom p' |> M.zoom p''));
+    assert (M.unzoom 0 p mA =% M.unzoom 0 p' (M.unzoom 0 p'' mA));
+    assert (M.modify p (fun _ -> mB) mA =%
+            M.modify p' (M.modify p'' (fun _ -> mB)) mA);
+    assert (mA =% (mA |> M.map lnot |> M.map lnot));
+    assert (M.modify p (M.merge max mB) mA =% M.merge max mA (M.unzoom 0 p mB));
+    assert (M.merge max mA mB =%
+            M.map (~-) (M.merge min (M.map (~-) mA) (M.map (~-) mB)))
   done;
   test_catai_bytes ()

@@ -47,6 +47,10 @@ val is_full : t -> bool
 val empty : t
 val c0 : t
 val c1 : t
+val c00 : t
+val c01 : t
+val c10 : t
+val c11 : t
 
 val const : int -> bool -> t
 val const_unsafe : int -> bool -> t

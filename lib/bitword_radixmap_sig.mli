@@ -59,4 +59,6 @@ module type S = sig
     appose: ('i -> 'b -> 'b -> 'b) ->
     unzoom: ('i -> cod -> path -> 'b -> 'b) ->
     t -> 'b
+
+  val valid : t -> bool
 end
