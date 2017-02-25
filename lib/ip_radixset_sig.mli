@@ -49,4 +49,6 @@ module type S = sig
     appose: (network -> 'a -> 'a -> 'a) ->
     unzoom: (network -> bool -> Bitword.t -> 'a -> 'a) ->
     t -> 'a
+
+  val valid : t -> bool
 end

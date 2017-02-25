@@ -119,7 +119,7 @@ module V6_base = struct
     let a = Ipaddr.V6.to_bytes (Ipaddr.V6.Prefix.network pfx) in
     let rec loop k acc =
       if k = l then acc else
-      if k + 8 >= l then
+      if k + 8 > l then
         let lr = l mod 8 in
         acc |> zoom (Bitword.make lr (Char.code a.[k / 8] lsr (8 - lr)))
       else
@@ -152,7 +152,7 @@ module Make (Base : BASE) = struct
     let b = bytes_of_network net in
     let rec loop k =
       if k = l then (fun _ -> const x) else
-      if k < l - 8 then
+      if k + 8 > l then
         let w = Bitword.make (l - k) (Char.code b.[k / 8] lsr (8 - l + k)) in
         modify w (fun _ -> const x)
       else
@@ -170,13 +170,17 @@ module Make (Base : BASE) = struct
   let compl sX sU = merge (fun x y -> not x && y) sX sU
 
   let catai ~const ~appose ~unzoom s =
-    catai_bytes ~index_buffer_size:4 ~make_index ~const ~appose ~unzoom s
+    catai_bytes
+      ~index_buffer_size:(max_length / 8)
+      ~make_index ~const ~appose ~unzoom s
 
   let rec is_network s =
     recurse
       ~const:(fun _ -> false)
       ~appose:(fun _ _ -> false)
       ~unzoom:(fun x p s' -> not x && is_network s') s
+
+  let valid = M.valid
 end
 
 module V4 = Make (V4_base)

@@ -3,3 +3,4 @@ true: bin_annot
 
 <lib/bitword.*>: inline(4)
 <lib/ip*>: package(ipaddr)
+<tests/test_ip*>: package(ipaddr)

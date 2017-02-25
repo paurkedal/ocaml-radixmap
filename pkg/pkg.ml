@@ -13,4 +13,5 @@ let () = Pkg.describe ~licenses "radixmap" @@ fun c ->
     Pkg.mllib ~cond:(Conf.value c with_ipaddr) "lib/radixmap-ipaddr.mllib";
     Pkg.test "tests/test_bitword";
     Pkg.test "tests/test_bitword_radixmap";
+    Pkg.test "tests/test_ip_radixset";
   ]
