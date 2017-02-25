@@ -35,6 +35,11 @@ module type S = sig
   val contains_address : t -> address -> bool
   val contains_network : t -> network -> bool
 
+  val add_address : address -> t -> t
+  val remove_address : address -> t -> t
+  val add_network : network -> t -> t
+  val remove_network : network -> t -> t
+
   val union : t -> t -> t
   val inter : t -> t -> t
   val compl : t -> t -> t

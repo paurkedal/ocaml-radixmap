@@ -19,6 +19,11 @@ module type BASE = sig
   type address
   type network
 
+  val max_length : int
+  val bytes_of_address : address -> string
+  val bytes_of_network : network -> string
+  val length_of_network : network -> int
+
   val is_full : t -> bool
   val of_network : network -> t
   val contains_address : t -> address -> bool
@@ -38,6 +43,11 @@ module V4_base = struct
   type t = M.t
   type address = Ipaddr.V4.t
   type network = Ipaddr.V4.Prefix.t
+
+  let max_length = 32
+  let bytes_of_address addr = Ipaddr.V4.to_bytes addr
+  let bytes_of_network net = Ipaddr.V4.to_bytes (Ipaddr.V4.Prefix.network net)
+  let length_of_network net = Ipaddr.V4.Prefix.bits net
 
   let is_full s = value s = Some true
 
@@ -75,6 +85,11 @@ module V6_base = struct
   type t = M.t
   type address = Ipaddr.V6.t
   type network = Ipaddr.V6.Prefix.t
+
+  let max_length = 128
+  let bytes_of_address addr = Ipaddr.V6.to_bytes addr
+  let bytes_of_network net = Ipaddr.V6.to_bytes (Ipaddr.V6.Prefix.network net)
+  let length_of_network net = Ipaddr.V6.Prefix.bits net
 
   let is_full s = value s = Some true
 
@@ -123,6 +138,32 @@ module Make (Base : BASE) = struct
   let full = const true
 
   let equal = M.equal
+
+  let flip_address addr x s =
+    let b = bytes_of_address addr in
+    let rec loop i =
+      if i = max_length / 8 then (fun _ -> const x) else
+      let w = Bitword.make 8 (Char.code b.[i]) in
+      modify w (loop (i + 1)) in
+    loop 0 s
+
+  let flip_network net x s =
+    let l = length_of_network net in
+    let b = bytes_of_network net in
+    let rec loop k =
+      if k = l then (fun _ -> const x) else
+      if k < l - 8 then
+        let w = Bitword.make (l - k) (Char.code b.[k / 8] lsr (8 - l + k)) in
+        modify w (fun _ -> const x)
+      else
+        let w = Bitword.make 8 (Char.code b.[k / 8]) in
+        modify w (loop (k + 8)) in
+    loop 0 s
+
+  let add_address addr s = flip_address addr true s
+  let remove_address addr s = flip_address addr false s
+  let add_network net s = flip_network net true s
+  let remove_network net s = flip_network net false s
 
   let union sA sB = merge (||) sA sB
   let inter sA sB = merge (&&) sA sB
