@@ -21,9 +21,104 @@ module M = Bitword_radixmap.Make
     let equal (x : int) (y : int) = x = y
   end)
 
+module Bitwords_map = Bitword_radixmap.Make
+  (struct
+    type t = Bitword.t list
+    let equal (x : t) (y : t) = x = y
+  end)
+
 let pp = P.pp Format.pp_print_int
 
 let size = 100
+
+module Path = struct
+  type t = string
+
+  let make l buf = (l, Bytes.sub_string buf 0 ((l + 7) / 8))
+
+  let empty = (0, "")
+
+  let length (l, _) = l
+
+  let get (l, s) k =
+    assert (0 <= k && k < l);
+    Char.code s.[k / 8] lsr (7 - k mod 8) land 1 <> 0
+
+  let prefix l' (l, s) =
+    let s' =
+      String.init ((l' + 7) / 8)
+        (fun i ->
+          if 8 * i + 8 <= l' then s.[i] else
+          Char.chr (Char.code s.[i] land 0xff lsl (8 - l' mod 8) land 0xff)) in
+    (l', s')
+
+  let pp fmtr (l, s) = Format.printf "(%d,%S)" l s
+end
+
+let rec random_bitwords_map ws =
+  (match Random.int 7 with
+   | 0 | 2 ->
+      Bitwords_map.appose (random_bitwords_map (Bitword.c0 :: ws))
+                          (random_bitwords_map (Bitword.c1 :: ws))
+   | 1 | 3 ->
+      let w = Bitword.random_uniform (Random.int Bitword.max_length + 1) in
+      Bitwords_map.unzoom ws w (random_bitwords_map (w :: ws))
+   | _ ->
+      Bitwords_map.const ws)
+
+let check_const_path p ws =
+  let rec loop i = function
+   | [] -> ()
+   | w :: ws ->
+      let l = Bitword.length w in
+      for k = 0 to l - 1 do
+        assert (Bitword.Be.get w k = Path.get p (i + k))
+      done;
+      loop (i + l) ws in
+  loop 0 (List.rev ws)
+
+let check_unzoom_path p ws =
+  let rec loop i = function
+   | [] -> ()
+   | w :: ws ->
+      let lw = Bitword.length w in
+      let lr = Path.length p - i in
+      assert (lr + 1 >= lw);
+      let l = min lw lr in
+      if l > 0 then begin
+        for k = 0 to l - 1 do
+          assert (Bitword.Be.get w k = Path.get p (i + k))
+        done;
+        loop (i + l) ws
+      end in
+  loop 0 (List.rev ws)
+
+let test_catai_bytes () =
+  let make_index plen pbuf = Path.make plen pbuf in
+  let const p ws = check_const_path p ws; p in
+  let appose p p0 p1 =
+    assert (Path.length p0 = Path.length p + 1);
+    assert (Path.length p1 = Path.length p + 1);
+    assert (Path.get p0 (Path.length p) = false);
+    assert (Path.get p1 (Path.length p) = true);
+    p in
+  let unzoom ws depth pN pN' =
+    assert (pN = pN');
+    let p = Path.prefix (Path.length pN - depth) pN in
+    check_unzoom_path p ws;
+    p in
+  for _ = 1 to 10000 do
+    let m = random_bitwords_map [] in
+    let p = Bitwords_map.catai_bytes ~make_index ~const ~appose ~unzoom m in
+    assert (p = Path.empty);
+  done
+
+let (=%) mA mB =
+  assert (M.valid mA);
+  assert (M.valid mB);
+  M.equal mA mB
+
+let (<>%) mA mB = not (mA =% mB)
 
 let rec modify_random m =
   M.modify (Bitword.random_uniform (Random.int 24))
@@ -37,46 +132,6 @@ let rec random_map () =
     if n = 0 then acc else
     loop (n - 1) (modify_random acc) in
   loop (Random.int size) (M.const (Random.int size))
-
-let check_path path ws =
-  let rec loop i = function
-   | [] -> ()
-   | w :: ws ->
-      let l = Bitword.length w in
-      for k = 0 to l - 1 do
-        let byte = Char.code path.[(i + k) / 8] in
-        assert (Bitword.Be.get w k = (byte lsr (7 - (i + k) mod 8) land 1 <> 0))
-      done;
-      loop (i + l) ws in
-  loop 0 (List.rev ws)
-
-let test_catai_bytes () =
-  let make_index plen pbuf = (plen, pbuf) in
-  let const (plen, pbuf) _ =
-    let path = Bytes.sub_string pbuf 0 ((plen + 7) / 8) in
-    fun ws ->
-      check_path path ws in
-  let appose (plen, pbuf) f0 f1 =
-    let path = Bytes.sub_string pbuf 0 ((plen + 7) / 8) in
-    fun ws ->
-      check_path path ws;
-      f0 (Bitword.c0 :: ws);
-      f1 (Bitword.c1 :: ws) in
-  let unzoom (plen, pbuf) x w f =
-    let path = Bytes.sub_string pbuf 0 ((plen + 7) / 8) in
-    fun ws ->
-      check_path path ws;
-      f (w :: ws) in
-  for _ = 1 to 10000 do
-    M.catai_bytes ~make_index ~const ~appose ~unzoom (random_map ()) []
-  done
-
-let (=%) mA mB =
-  assert (M.valid mA);
-  assert (M.valid mB);
-  M.equal mA mB
-
-let (<>%) mA mB = not (mA =% mB)
 
 let () =
   Testkit.init "test_bitword_radixmap";

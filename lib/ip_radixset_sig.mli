@@ -44,11 +44,12 @@ module type S = sig
   val inter : t -> t -> t
   val compl : t -> t -> t
 
-  val catai :
+  val cata :
     const: (network -> bool -> 'a) ->
     appose: (network -> 'a -> 'a -> 'a) ->
-    unzoom: (network -> bool -> Bitword.t -> 'a -> 'a) ->
+    unzoom: (bool -> int -> network -> 'a -> 'a) ->
     t -> 'a
 
+  (**/**)
   val valid : t -> bool
 end

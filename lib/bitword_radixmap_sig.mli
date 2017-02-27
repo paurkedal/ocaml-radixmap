@@ -57,7 +57,7 @@ module type S = sig
     ?index_buffer_size: int -> make_index: (int -> Bytes.t -> 'i) ->
     const: ('i -> cod -> 'b) ->
     appose: ('i -> 'b -> 'b -> 'b) ->
-    unzoom: ('i -> cod -> path -> 'b -> 'b) ->
+    unzoom: (cod -> int -> 'i -> 'b -> 'b) ->
     t -> 'b
 
   val valid : t -> bool

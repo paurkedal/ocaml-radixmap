@@ -169,10 +169,10 @@ module Make (Base : BASE) = struct
   let inter sA sB = merge (&&) sA sB
   let compl sX sU = merge (fun x y -> not x && y) sX sU
 
-  let catai ~const ~appose ~unzoom s =
+  let cata ~const ~appose ~unzoom s =
     catai_bytes
-      ~index_buffer_size:(max_length / 8)
-      ~make_index ~const ~appose ~unzoom s
+      ~index_buffer_size:(max_length / 8) ~make_index
+      ~const ~appose ~unzoom s
 
   let rec is_network s =
     recurse
