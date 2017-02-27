@@ -22,10 +22,10 @@ let cat_bitword p pN ps =
 
 module Poly = struct
   type path = Bitword.t
-  type 'a t =
+  type ('a, 'id) t =
     | Const of 'a
-    | Appose of 'a t * 'a t
-    | Unzoom of 'a * Bitword.t * 'a t
+    | Appose of ('a, 'id) t * ('a, 'id) t
+    | Unzoom of 'a * Bitword.t * ('a, 'id) t
 
   let rec max_depth = function
    | Const x -> 0
@@ -98,7 +98,8 @@ module Make (Cod : EQUAL) = struct
 
   type path = Bitword.t
   type cod = Cod.t
-  type t = cod Poly.t
+  type t_id
+  type t = (cod, t_id) Poly.t
 
   let const = Poly.const
   let is_const = Poly.is_const

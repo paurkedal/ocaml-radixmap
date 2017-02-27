@@ -27,7 +27,7 @@ module Bitwords_map = Bitword_radixmap.Make
     let equal (x : t) (y : t) = x = y
   end)
 
-let pp = P.pp Format.pp_print_int
+let pp fmtr = P.pp Format.pp_print_int fmtr
 
 let size = 100
 

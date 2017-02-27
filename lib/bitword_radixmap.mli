@@ -28,28 +28,29 @@ open Bitword_radixmap_sig
 
 module Poly : sig
   type path = Bitword.t
-  type 'a t
+  type ('a, 'id) t
 
-  val const : 'a -> 'a t
-  val is_const : 'a t -> bool
-  val value : 'a t -> 'a option
-  val zoom : path -> 'a t -> 'a t
+  val const : 'a -> ('a, 'id) t
+  val is_const : ('a, _) t -> bool
+  val value : ('a, _) t -> 'a option
+  val zoom : path -> ('a, 'id) t -> ('a, 'id) t
 
   val recurse :
     const: ('a -> 'b) ->
-    appose: ('a t -> 'a t -> 'b) ->
-    unzoom: ('a -> path -> 'a t -> 'b) ->
-    'a t -> 'b
+    appose: (('a, 'id) t -> ('a, 'id) t -> 'b) ->
+    unzoom: ('a -> path -> ('a, 'id) t -> 'b) ->
+    ('a, 'id) t -> 'b
 
   val cata :
     const: ('a -> 'b) ->
     appose: ('b -> 'b -> 'b) ->
     unzoom: ('a -> path -> 'b -> 'b) ->
-    'a t -> 'b
+    ('a, 'id) t -> 'b
 
-  val pp : (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a t -> unit
+  val pp : (Format.formatter -> 'a -> unit) ->
+           Format.formatter -> ('a, _) t -> unit
 end
 
 module Make (Cod : EQUAL) : S
   with type cod = Cod.t
-   and type 'a poly := 'a Poly.t
+   and type ('a, 'id) poly := ('a, 'id) Poly.t

@@ -24,8 +24,9 @@ end
 module type S = sig
   type path = Bitword.t
   type cod
-  type 'a poly
-  type t = cod poly
+  type ('a, 'id) poly
+  type t_id
+  type t = (cod, t_id) poly
 
   val equal : t -> t -> bool
 
@@ -37,9 +38,9 @@ module type S = sig
   val zoom : path -> t -> t
 
   val modify : path -> (t -> t) -> t -> t
-  val map : ('a -> cod) -> 'a poly -> t
-  val mapi : (path list -> 'a -> cod) -> 'a poly -> t
-  val merge : ('a -> 'b -> cod) -> 'a poly -> 'b poly -> t
+  val map : ('a -> cod) -> ('a, _) poly -> t
+  val mapi : (path list -> 'a -> cod) -> ('a, _) poly -> t
+  val merge : ('a -> 'b -> cod) -> ('a, _) poly -> ('b, _) poly -> t
 
   val recurse :
     const: (cod -> 'b) ->
