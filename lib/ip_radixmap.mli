@@ -28,8 +28,10 @@ module Make_v4 (Cod : Bitword_radixmap_sig.EQUAL) : Ip_radixmap_sig.S
   with type address = Ipaddr.V4.t
    and type network = Ipaddr.V4.Prefix.t
    and type cod = Cod.t
+   and type ('a, 'id) poly = ('a, 'id) Poly_v4.t
 
 module Make_v6 (Cod : Bitword_radixmap_sig.EQUAL) : Ip_radixmap_sig.S
   with type address = Ipaddr.V6.t
    and type network = Ipaddr.V6.Prefix.t
    and type cod = Cod.t
+   and type ('a, 'id) poly = ('a, 'id) Poly_v6.t
