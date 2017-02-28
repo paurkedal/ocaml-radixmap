@@ -36,8 +36,10 @@ module type S = sig
   val appose : t -> t -> t
   val unzoom : cod -> path -> t -> t
   val zoom : path -> t -> t
+  val zoom_string : int -> string -> t -> t
 
   val modify : path -> (t -> t) -> t -> t
+  val modify_string : int -> string -> (t -> t) -> t -> t
   val map : ('a -> cod) -> ('a, _) poly -> t
   val mapi : (path list -> 'a -> cod) -> ('a, _) poly -> t
   val merge : ('a -> 'b -> cod) -> ('a, _) poly -> ('b, _) poly -> t

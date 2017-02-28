@@ -34,6 +34,7 @@ module Poly : sig
   val is_const : ('a, _) t -> bool
   val value : ('a, _) t -> 'a option
   val zoom : path -> ('a, 'id) t -> ('a, 'id) t
+  val zoom_string : int -> string -> ('a, 'id) t -> ('a, 'id) t
 
   val recurse :
     const: ('a -> 'b) ->

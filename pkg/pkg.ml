@@ -14,4 +14,5 @@ let () = Pkg.describe ~licenses "radixmap" @@ fun c ->
     Pkg.test "tests/test_bitword";
     Pkg.test "tests/test_bitword_radixmap";
     Pkg.test "tests/test_ip_radixset";
+    Pkg.test "tests/test_ip_radixmap";
   ]

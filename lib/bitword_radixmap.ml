@@ -73,6 +73,23 @@ module Poly = struct
           let pC, pN' = Bitword.Be.cut nZ pN in
           if Bitword.equal pC pZ then Unzoom (xH, pN', hN) else (Const xH))
 
+  let zoom_string n p h =
+    let rec loop i h =
+      if i + 24 <= n then
+        let bits = Char.code p.[i / 8] lsl 16 lor
+                   Char.code p.[i / 8 + 1] lsl 8 lor
+                   Char.code p.[i / 8 + 2] in
+        loop (i + 24) (zoom (Bitword.make 24 bits) h)
+      else if i + 8 <= n then
+        let bits = Char.code p.[i / 8] in
+        loop (i + 8) (zoom (Bitword.make 8 bits) h)
+      else if i < n then
+        let bits = Char.code p.[i / 8] lsr (8 - n + i) in
+        zoom (Bitword.make (n - i) bits) h
+      else
+        h in
+    loop 0 h
+
   let rec pp f fmtr m =
     Format.pp_print_char fmtr '{';
     (match m with
@@ -105,6 +122,7 @@ module Make (Cod : EQUAL) = struct
   let is_const = Poly.is_const
   let value = Poly.value
   let zoom = Poly.zoom
+  let zoom_string = Poly.zoom_string
   let recurse = Poly.recurse
   let cata = Poly.cata
 
@@ -261,6 +279,23 @@ module Make (Cod : EQUAL) = struct
           let hA' = unzoom xH pA' (f (Const xH)) in
           let hN' = unzoom xH pN' hN in
           unzoom xH pC (if kA then appose hN' hA' else appose hA' hN'))
+
+  let modify_string n p f h =
+    let rec loop i h =
+      if i + 24 <= n then
+        let bits = Char.code p.[i / 8] lsl 16 lor
+                   Char.code p.[i / 8 + 1] lsl 8 lor
+                   Char.code p.[i / 8 + 2] in
+        modify (Bitword.make 24 bits) (loop (i + 24)) h
+      else if i + 8 <= n then
+        let bits = Char.code p.[i / 8] in
+        modify (Bitword.make 8 bits) (loop (i + 8)) h
+      else if i < n then
+        let bits = Char.code p.[i / 8] lsr (8 - n + i) in
+        modify (Bitword.make (n - i) bits) f h
+      else
+        f h in
+    loop 0 h
 
   let rec map f = function
    | Const x -> Const (f x)
