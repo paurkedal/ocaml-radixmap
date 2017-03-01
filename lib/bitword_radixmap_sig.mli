@@ -35,6 +35,7 @@ module type S = sig
   val value : t -> cod option
   val appose : t -> t -> t
   val unzoom : cod -> path -> t -> t
+  val unzoom_string : cod -> int -> string -> t -> t
   val zoom : path -> t -> t
   val zoom_string : int -> string -> t -> t
 

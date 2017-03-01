@@ -36,6 +36,7 @@ module type S = sig
   val add_network : network -> cod -> t -> t
   val remove_address : address -> t -> t
   val remove_network : network -> t -> t
+  val intersect_network : network -> t -> t
 
   val map : ('a -> cod) -> ('a, _) poly -> t
   val filter : (cod -> bool) -> (cod, _) poly -> t

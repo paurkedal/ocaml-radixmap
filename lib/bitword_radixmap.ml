@@ -168,6 +168,34 @@ module Make (Cod : EQUAL) = struct
         else Unzoom (xH, pA', Unzoom (xH, pN', hN))
      | Const _ | Appose _ | Unzoom _ -> Unzoom (xA, pA, h))
 
+  let rec unzoom_string xA l s h =
+    if l = 0 then h else
+    let k, bits =
+      if l >= 24 then
+        let bits = Char.code s.[l / 8 - 3] lsl 16
+               lor Char.code s.[l / 8 - 2] lsl 8
+               lor Char.code s.[l / 8 - 1] in
+        if l mod 8 = 0 then (24, bits) else
+        let bits = bits lsl (l mod 8) land 0xffffff
+               lor Char.code s.[l / 8] lsr (8 - l mod 8) in
+        (24, bits)
+      else if l >= 16 then
+        let bits = Char.code s.[l / 8 - 2] lsl 8
+               lor Char.code s.[l / 8 - 1] in
+        if l mod 8 = 0 then (16, bits) else
+        let bits = bits lsl (l mod 8) land 0xffff
+               lor Char.code s.[l / 8] lsr (8 - l mod 8) in
+        (16, bits)
+      else if l >= 8 then
+        let bits = Char.code s.[l / 8 - 1] in
+        if l mod 8 = 0 then (8, bits) else
+        let bits = bits lsl (l mod 8) land 0xff
+               lor Char.code s.[l / 8] lsr (8 - l mod 8) in
+        (8, bits)
+      else
+        (l, Char.code s.[0] lsr (8 - l)) in
+    unzoom_string xA (l - k) s (unzoom xA (Bitword.make k bits) h)
+
   let appose h0 h1 =
     (match h0, h1 with
      | Const x0, Const x1 ->

@@ -133,6 +133,34 @@ let rec random_map () =
     loop (n - 1) (modify_random acc) in
   loop (Random.int size) (M.const (Random.int size))
 
+let random_string_path () =
+  let l = Random.int 70 in
+  let f i =
+    if i < l / 8 then Char.chr (Random.int 256) else
+    Char.chr (Random.int (1 lsl (l mod 8)) lsl (8 - l mod 8)) in
+  let s = String.init ((l + 7) / 8) f in
+  (l, s)
+
+let rec custom_unzoom_string x l s m =
+  if l = 0 then m else
+  if l mod 8 <> 0 then
+    let k = l mod 8 in
+    let w = Bitword.make k (Char.code s.[l / 8] lsr (8 - k)) in
+    custom_unzoom_string x (l - k) s (M.unzoom x w m)
+  else
+    let w = Bitword.make 8 (Char.code s.[l / 8 - 1]) in
+    custom_unzoom_string x (l - 8) s (M.unzoom x w m)
+
+let custom_zoom_string l s m =
+  let rec loop k m =
+    if k + 8 <= l then
+      loop (k + 8) (M.zoom (Bitword.make 8 (Char.code s.[k / 8])) m)
+    else if k < l then
+      M.zoom (Bitword.make (l - k) (Char.code s.[l / 8] lsr (8 - l + k))) m
+    else
+      m in
+  loop 0 m
+
 let () =
   Testkit.init "test_bitword_radixmap";
 
@@ -156,6 +184,9 @@ let () =
     assert (mA <>% M.unzoom (-1) p mA);
     assert (mA =% M.zoom Bitword.c0 (M.appose mA mB));
     assert (mB =% M.zoom Bitword.c1 (M.appose mA mB));
+    let l, s = random_string_path () in
+    assert (M.unzoom_string (-1) l s mA =% custom_unzoom_string (-1) l s mA);
+    assert (M.zoom_string l s mA =% custom_zoom_string l s mA);
 
     assert (M.zoom p mA =% (mA |> M.zoom p' |> M.zoom p''));
     assert (M.unzoom 0 p mA =% M.unzoom 0 p' (M.unzoom 0 p'' mA));
