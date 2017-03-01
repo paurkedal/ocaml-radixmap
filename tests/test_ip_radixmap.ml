@@ -151,13 +151,13 @@ module Make (M : S) = struct
             loop (k - 1) m' ipa'
          | 2 ->
             let addr = M.random_address () in
-            let m' = M.remove_address addr k m in
+            let m' = M.remove_address addr m in
             let ipa' = Ip_assoc.remove_address addr ipa in
             assert (M.get_address m' addr = None);
             loop (k - 1) m' ipa'
          | 3 ->
             let netw = M.random_network () in
-            let m' = M.remove_network netw k m in
+            let m' = M.remove_network netw m in
             let ipa' = Ip_assoc.remove_network netw ipa in
             assert (M.get_network m' netw = None);
             loop (k - 1) m' ipa'

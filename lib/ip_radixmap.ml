@@ -106,11 +106,11 @@ module Make (Base : BASE) (Cod : Bitword_radixmap_sig.EQUAL) = struct
     M.modify_string (length_of_network netw) (bytes_of_network netw)
                     (fun _ -> M.const (Some x)) m
 
-  let remove_address addr x m =
+  let remove_address addr m =
     M.modify_string max_length (bytes_of_address addr)
                     (fun _ -> M.const None) m
 
-  let remove_network netw x m =
+  let remove_network netw m =
     M.modify_string (length_of_network netw) (bytes_of_network netw)
                     (fun _ -> M.const None) m
 
