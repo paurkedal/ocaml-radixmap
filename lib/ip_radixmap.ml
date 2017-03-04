@@ -114,7 +114,7 @@ module Make (Base : BASE) (Cod : Bitword_radixmap_sig.EQUAL) = struct
     M.modify_string (length_of_network netw) (bytes_of_network netw)
                     (fun _ -> M.const None) m
 
-  let intersect_network netw m =
+  let inter_network netw m =
     let l = length_of_network netw in
     let s = bytes_of_network netw in
     m |> M.zoom_string l s |> M.unzoom_string None l s

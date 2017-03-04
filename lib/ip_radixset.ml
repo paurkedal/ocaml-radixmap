@@ -24,10 +24,11 @@ module type BASE = sig
   val bytes_of_network : network -> string
   val length_of_network : network -> int
 
+  val is_empty : t -> bool
   val is_full : t -> bool
   val of_network : network -> t
   val contains_address : t -> address -> bool
-  val contains_network : t -> network -> bool
+  val zoom_network : network -> t -> t
   val make_index : int -> Bytes.t -> network
 end
 
@@ -49,6 +50,7 @@ module V4_base = struct
   let bytes_of_network net = Ipaddr.V4.to_bytes (Ipaddr.V4.Prefix.network net)
   let length_of_network net = Ipaddr.V4.Prefix.bits net
 
+  let is_empty s = value s = Some false
   let is_full s = value s = Some true
 
   let of_network pfx =
@@ -66,16 +68,14 @@ module V4_base = struct
       |> zoom (Bitword.make 16 aL)
       |> is_full
 
-  let contains_network s pfx =
+  let zoom_network pfx s =
     let l = Ipaddr.V4.Prefix.bits pfx in
     let aH, aL = Ipaddr.V4.Prefix.network pfx |> Ipaddr.V4.to_int16 in
     if l <= 16 then
       s |> zoom (Bitword.make l (aH lsr (16 - l)))
-        |> is_full
     else
       s |> zoom (Bitword.make 16 aH)
         |> zoom (Bitword.make (l - 16) (aL lsr (32 - l)))
-        |> is_full
 
   let make_index plen pbuf =
     Ipaddr.V4.Prefix.make plen (Ipaddr.V4.of_bytes_exn pbuf)
@@ -91,6 +91,7 @@ module V6_base = struct
   let bytes_of_network net = Ipaddr.V6.to_bytes (Ipaddr.V6.Prefix.network net)
   let length_of_network net = Ipaddr.V6.Prefix.bits net
 
+  let is_empty s = value s = Some false
   let is_full s = value s = Some true
 
   let of_network pfx =
@@ -114,7 +115,7 @@ module V6_base = struct
       |> zoom (Bitword.make 16 a1) |> zoom (Bitword.make 16 a0)
       |> is_full
 
-  let contains_network s pfx =
+  let zoom_network pfx s =
     let l = Ipaddr.V6.Prefix.bits pfx in
     let a = Ipaddr.V6.to_bytes (Ipaddr.V6.Prefix.network pfx) in
     let rec loop k acc =
@@ -124,7 +125,7 @@ module V6_base = struct
         acc |> zoom (Bitword.make lr (Char.code a.[k / 8] lsr (8 - lr)))
       else
         loop (k + 8) (acc |> zoom (Bitword.make 8 (Char.code a.[k / 8]))) in
-    loop 0 s |> is_full
+    loop 0 s
 
   let make_index plen pbuf =
     Ipaddr.V6.Prefix.make plen (Ipaddr.V6.of_bytes_exn pbuf)
@@ -134,10 +135,12 @@ module Make (Base : BASE) = struct
   include Base
 
   let empty = const false
-  let is_empty s = value s = Some false
   let full = const true
 
   let equal = M.equal
+
+  let contains_network s pfx = is_full (zoom_network pfx s)
+  let overlaps_network s pfx = not (is_empty (zoom_network pfx s))
 
   let flip_address addr x s =
     let b = bytes_of_address addr in
@@ -164,6 +167,11 @@ module Make (Base : BASE) = struct
   let remove_address addr s = flip_address addr false s
   let add_network net s = flip_network net true s
   let remove_network net s = flip_network net false s
+
+  let inter_network netw s =
+    let l = length_of_network netw in
+    let b = bytes_of_network netw in
+    s |> M.zoom_string l b |> M.unzoom_string false l b
 
   let union sA sB = merge (||) sA sB
   let inter sA sB = merge (&&) sA sB
