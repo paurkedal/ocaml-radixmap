@@ -1,4 +1,4 @@
-*.byte
-*.native
+.merlin
 /_build
 /radixmap.install
+/radixmap-ipaddr.install
