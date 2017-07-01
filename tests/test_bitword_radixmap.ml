@@ -45,6 +45,7 @@ module Path = struct
     Char.code s.[k / 8] lsr (7 - k mod 8) land 1 <> 0
 
   let prefix l' (l, s) =
+    assert (l' <= l);
     let s' =
       String.init ((l' + 7) / 8)
         (fun i ->
@@ -52,7 +53,7 @@ module Path = struct
           Char.chr (Char.code s.[i] land 0xff lsl (8 - l' mod 8) land 0xff)) in
     (l', s')
 
-  let pp fmtr (l, s) = Format.printf "(%d,%S)" l s
+  let pp ppf (l, s) = Format.fprintf ppf "(%d,%S)" l s
 end
 
 let rec random_bitwords_map ws =
@@ -127,7 +128,7 @@ let rec modify_random m =
       M.const (Random.int size))
     m
 
-let rec random_map () =
+let random_map () =
   let rec loop n acc =
     if n = 0 then acc else
     loop (n - 1) (modify_random acc) in

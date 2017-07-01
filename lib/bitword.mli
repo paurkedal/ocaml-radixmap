@@ -56,6 +56,7 @@ val const : int -> bool -> t
 val const_unsafe : int -> bool -> t
 
 val make : int -> int -> t
+val make_unsafe : int -> int -> t
 
 val cat_exn : t -> t -> t
 val cat_rem : t -> t -> t * t

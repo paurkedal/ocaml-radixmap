@@ -31,7 +31,6 @@ module type S = sig
   val of_network : network -> t
   val is_network : t -> bool
 
-  val equal : t -> t -> bool
   val contains_address : t -> address -> bool
   val contains_network : t -> network -> bool
   val overlaps_network : t -> network -> bool

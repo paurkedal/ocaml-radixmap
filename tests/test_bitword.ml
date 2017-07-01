@@ -45,7 +45,7 @@ struct
 
   let test () =
     for n = 1 to Bitword.max_length do
-      for round = 1 to Pervasives.(min 10000 (1 lsl n)) do
+      for _ = 1 to Pervasives.(min 10000 (1 lsl n)) do
         test_one (Bitword.random_uniform n)
       done
     done
@@ -94,7 +94,7 @@ let () =
     assert (w1 = Bitword.Le.init n (fun _ -> true));
     assert (w0 = Bitword.make n 0);
     assert (w1 = Bitword.make n Pervasives.(1 lsl n - 1));
-    for round = 0 to Pervasives.(min 10000 (1 lsl n)) do
+    for _ = 0 to Pervasives.(min 10000 (1 lsl n)) do
       let w = Bitword.random_uniform n in
       assert (Bitword.length w = n);
       assert (w = Bitword.make n (Bitword.bits w));

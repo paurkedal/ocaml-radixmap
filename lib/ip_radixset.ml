@@ -186,7 +186,7 @@ module Make (Base : BASE) = struct
     recurse
       ~const:(fun _ -> false)
       ~appose:(fun _ _ -> false)
-      ~unzoom:(fun x p s' -> not x && is_network s') s
+      ~unzoom:(fun x _p s' -> not x && is_network s') s
 
   let valid = M.valid
 end

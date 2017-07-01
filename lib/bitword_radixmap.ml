@@ -28,9 +28,9 @@ module Poly = struct
     | Unzoom of 'a * Bitword.t * ('a, 'id) t
 
   let rec max_depth = function
-   | Const x -> 0
+   | Const _ -> 0
    | Appose (h0, h1) -> 1 + max (max_depth h0) (max_depth h1)
-   | Unzoom (x, p, h) -> Bitword.length p + max_depth h
+   | Unzoom (_, p, h) -> Bitword.length p + max_depth h
 
   let recurse ~const ~appose ~unzoom = function
    | Const x -> const x
@@ -135,9 +135,9 @@ module Make (Cod : EQUAL) = struct
       not (Cod.equal xH x0 || Cod.equal xH x1 || Cod.equal x0 x1)
    | Unzoom (xH, p, Const xN) ->
       not (Bitword.is_empty p) && not (Cod.equal xH xN)
-   | Unzoom (xH, p, (Unzoom (xH', p', hN') as hN)) when Cod.equal xH xH' ->
+   | Unzoom (xH, p, (Unzoom (xH', p', _) as hN)) when Cod.equal xH xH' ->
       not (Bitword.is_empty p) && Bitword.is_full p' && valid hN
-   | Unzoom (xH, p, hN) ->
+   | Unzoom (_, p, hN) ->
       not (Bitword.is_empty p) && valid hN
 
   let rec equal hA hB =
@@ -153,7 +153,7 @@ module Make (Cod : EQUAL) = struct
     if Bitword.is_empty pA then h else
     (match h with
      | Const x when Cod.equal x xA -> h
-     | Const x when Bitword.length pA = 1 ->
+     | Const _ when Bitword.length pA = 1 ->
         if Bitword.Be.get pA 0
         then Appose (Const xA, h)
         else Appose (h, Const xA)
