@@ -78,7 +78,7 @@ module V4_base = struct
         |> zoom (Bitword.make (l - 16) (aL lsr (32 - l)))
 
   let make_index plen pbuf =
-    Ipaddr.V4.Prefix.make plen (Ipaddr.V4.of_bytes_exn pbuf)
+    Ipaddr.V4.Prefix.make plen (Ipaddr.V4.of_bytes_exn (Bytes.to_string pbuf))
 end
 
 module V6_base = struct
@@ -128,7 +128,7 @@ module V6_base = struct
     loop 0 s
 
   let make_index plen pbuf =
-    Ipaddr.V6.Prefix.make plen (Ipaddr.V6.of_bytes_exn pbuf)
+    Ipaddr.V6.Prefix.make plen (Ipaddr.V6.of_bytes_exn (Bytes.to_string pbuf))
 end
 
 module Make (Base : BASE) = struct

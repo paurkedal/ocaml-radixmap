@@ -43,7 +43,7 @@ module V4_base = struct
   let length_of_network net = Ipaddr.V4.Prefix.bits net
 
   let make_index plen pbuf =
-    Ipaddr.V4.Prefix.make plen (Ipaddr.V4.of_bytes_exn pbuf)
+    Ipaddr.V4.Prefix.make plen (Ipaddr.V4.of_bytes_exn (Bytes.to_string pbuf))
 end
 
 module V6_base = struct
@@ -57,7 +57,7 @@ module V6_base = struct
   let length_of_network net = Ipaddr.V6.Prefix.bits net
 
   let make_index plen pbuf =
-    Ipaddr.V6.Prefix.make plen (Ipaddr.V6.of_bytes_exn pbuf)
+    Ipaddr.V6.Prefix.make plen (Ipaddr.V6.of_bytes_exn (Bytes.to_string pbuf))
 end
 
 module Make (Base : BASE) (Cod : Bitword_radixmap_sig.EQUAL) = struct
