@@ -1,0 +1,25 @@
+(library
+  (name testkit)
+  (wrapped false)
+  (modules Testkit)
+  (libraries unix))
+
+(test
+  (name test_bitword)
+  (modules Test_bitword)
+  (libraries radixmap testkit))
+
+(test
+  (name test_bitword_radixmap)
+  (modules Test_bitword_radixmap)
+  (libraries radixmap testkit))
+
+(test
+  (name test_ip_radixset)
+  (modules Test_ip_radixset)
+  (libraries radixmap_ipaddr testkit))
+
+(test
+  (name test_ip_radixmap)
+  (modules Test_ip_radixmap)
+  (libraries radixmap_ipaddr testkit))
