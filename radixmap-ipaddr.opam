@@ -1,20 +1,20 @@
-opam-version: "1.2"
+opam-version: "2.0"
 name: "radixmap-ipaddr"
-authors: ["Petter A. Urkedal"]
 maintainer: "paurkedal@gmail.com"
+authors: "Petter A. Urkedal"
+license: "LGPL-3 with OCaml linking exception"
 homepage: "https://github.com/paurkedal/ocaml-radixmap/"
 bug-reports: "https://github.com/paurkedal/ocaml-radixmap/issues"
-dev-repo: "https://github.com/paurkedal/ocaml-radixmap.git"
-license: "LGPL-3 with OCaml linking exception"
-
-build: [["jbuilder" "build" "-p" name "-j" jobs]]
-build-test: [["jbuilder" "runtest" "-p" name "-j" jobs]]
-
 depends: [
+  "ocaml" {>= "4.02.3"}
   "ipaddr"
   "jbuilder" {build}
   "radixmap"
   "topkg" {build}
   "topkg-jbuilder" {build}
 ]
-available: [ocaml-version >= "4.02.3"]
+build: [
+  ["jbuilder" "build" "-p" name "-j" jobs]
+  ["jbuilder" "runtest" "-p" name "-j" jobs] {with-test}
+]
+dev-repo: "git+https://github.com/paurkedal/ocaml-radixmap.git"
