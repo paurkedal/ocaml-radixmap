@@ -6,13 +6,12 @@ license: "LGPL-3 with OCaml linking exception"
 homepage: "https://github.com/paurkedal/ocaml-radixmap/"
 bug-reports: "https://github.com/paurkedal/ocaml-radixmap/issues"
 depends: [
+  "dune" {build}
   "ocaml" {>= "4.02.3"}
-  "jbuilder" {build}
-  "topkg" {build}
-  "topkg-jbuilder" {build}
 ]
 build: [
-  ["jbuilder" "build" "-p" name "-j" jobs]
-  ["jbuilder" "runtest" "-p" name "-j" jobs] {with-test}
+  ["dune" "build" "-p" name "-j" jobs]
+  ["dune" "runtest" "-p" name "-j" jobs] {with-test}
 ]
 dev-repo: "git+https://github.com/paurkedal/ocaml-radixmap.git"
+synopsis: "Map à la Binary Radix Tree"
