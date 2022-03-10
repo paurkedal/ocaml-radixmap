@@ -1,9 +1,9 @@
-(* Copyright (C) 2017  Petter A. Urkedal <paurkedal@gmail.com>
+(* Copyright (C) 2017--2022  Petter A. Urkedal <paurkedal@gmail.com>
  *
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or (at your
- * option) any later version, with the OCaml static compilation exception.
+ * option) any later version, with the LGPL-3.0 Linking Exception.
  *
  * This library is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -11,7 +11,8 @@
  * License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with this library.  If not, see <http://www.gnu.org/licenses/>.
+ * and the LGPL-3.0 Linking Exception along with this library.  If not, see
+ * <http://www.gnu.org/licenses/> and <https://spdx.org>, respectively.
  *)
 
 module type BASE = sig
@@ -131,6 +132,61 @@ module V6_base = struct
     Ipaddr.V6.Prefix.make plen (Ipaddr.V6.of_bytes_exn (Bytes.to_string pbuf))
 end
 
+module Vn_base = struct
+  type t = M.t
+  type address = Ipaddr.t
+  type network = Ipaddr.Prefix.t
+
+  let max_length = 128
+
+  let bytes_of_address addr =
+    (match Ipaddr.to_v4 addr with
+     | Some addr_v4 -> Ipaddr.V4.to_bytes addr_v4
+     | None -> Ipaddr.V6.to_bytes (Ipaddr.to_v6 addr))
+  let bytes_of_network net = bytes_of_address (Ipaddr.Prefix.network net)
+
+  let length_of_network net =
+    (match Ipaddr.Prefix.to_v4 net with
+     | Some net_v4 -> Ipaddr.V4.Prefix.bits net_v4
+     | None -> Ipaddr.V6.Prefix.bits (Ipaddr.Prefix.to_v6 net))
+
+  let is_empty s = value s = Some false
+  let is_full s = value s = Some true
+
+  let of_network pfx =
+    let l, net =
+      (match Ipaddr.Prefix.to_v4 pfx with
+       | Some pfx_v4 ->
+          (Ipaddr.V4.Prefix.bits pfx_v4,
+           Ipaddr.V4.to_bytes (Ipaddr.V4.Prefix.network pfx_v4))
+       | None ->
+          let pfx_v6 = Ipaddr.Prefix.to_v6 pfx in
+          (Ipaddr.V6.Prefix.bits pfx_v6,
+           Ipaddr.V6.to_bytes (Ipaddr.V6.Prefix.network pfx_v6))) in
+    let rec loop i acc =
+      if i < 0 then acc else
+      loop (i - 1) (acc |> unzoom false (Bitword.make 8 (Char.code net.[i]))) in
+    let lr = l mod 8 in
+    if lr = 0 then
+      loop (l / 8 - 1) (const true)
+    else
+      let w = Bitword.make lr (Char.code net.[l / 8] lsr (8 - lr)) in
+      loop (l / 8 - 1) (const true |> unzoom false w)
+
+  let contains_address s addr =
+    (match Ipaddr.to_v4 addr with
+     | Some addr -> V4_base.contains_address s addr
+     | None -> V6_base.contains_address s (Ipaddr.to_v6 addr))
+
+  let zoom_network pfx s =
+    (match Ipaddr.Prefix.to_v4 pfx with
+     | Some pfx -> V4_base.zoom_network pfx s
+     | None -> V6_base.zoom_network (Ipaddr.Prefix.to_v6 pfx) s)
+
+  let make_index plen pbuf =
+    Ipaddr.V6.Prefix.make plen (Ipaddr.V6.of_bytes_exn pbuf)
+end
+
 module Make (Base : BASE) = struct
   include Base
 
@@ -193,3 +249,4 @@ end
 
 module V4 = Make (V4_base)
 module V6 = Make (V6_base)
+module Vn = Make (Vn_base)
